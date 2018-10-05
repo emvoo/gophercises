@@ -1,0 +1,22 @@
+{{define "main"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Choose your own adventure</title>
+</head>
+<body>
+    <h1>{{.Title}}</h1>
+    {{range .Story}}
+        <p>{{.}}</p>
+    {{end}}
+    {{if .Options}}
+        <ul>
+            {{range .Options}}
+                <li>{{.Text}} <a href="?story={{.Arc}}">Click</a></li>
+            {{end}}
+        </ul>
+    {{end}}
+</body>
+</html>
+{{end}}
