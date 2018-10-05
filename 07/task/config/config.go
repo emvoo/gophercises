@@ -1,3 +1,6 @@
 package config
 
-const Bucket = "tasks"
+const (
+	BucketTasks = "tasks"
+	BucketDone  = "done"
+)

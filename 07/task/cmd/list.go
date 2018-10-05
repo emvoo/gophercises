@@ -3,10 +3,9 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"gophercises/07/task/store"
+		"log"
 	"fmt"
-	"log"
-	"strings"
-)
+	)
 
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -20,9 +19,8 @@ var listCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		for k, v := range tasks {
-			str := string(v[:])
-			fmt.Printf("%d. %s\n", k+1, strings.Join(str, " "))
+		for k, t := range tasks {
+			fmt.Printf("%d. %s\n", k+1, t)
 		}
 	},
 }

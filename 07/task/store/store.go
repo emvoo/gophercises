@@ -3,14 +3,12 @@ package store
 import (
 	"github.com/boltdb/bolt"
 	"log"
-	"encoding/json"
-	"encoding/binary"
 	"gophercises/07/task/config"
+		"fmt"
 )
 
 type Store struct {
-	DB     *bolt.DB
-	Bucket *bolt.Bucket
+	DB *bolt.DB
 }
 
 func OpenDB() *Store {
@@ -20,20 +18,24 @@ func OpenDB() *Store {
 	}
 
 	s := &Store{DB: db}
-	if err = s.createBucket(); err != nil {
+	if err = s.createBuckets(); err != nil {
 		log.Fatal(err)
 	}
 
 	return s
 }
 
-func (s *Store) createBucket() error {
+func (s *Store) createBuckets() error {
 	s.DB.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(config.Bucket))
+		_, err := tx.CreateBucketIfNotExists([]byte(config.BucketTasks))
 		if err != nil {
 			return err
 		}
-		s.Bucket = b
+
+		_, err = tx.CreateBucketIfNotExists([]byte(config.BucketDone))
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
@@ -41,18 +43,13 @@ func (s *Store) createBucket() error {
 	return nil
 }
 
-func InsertTask(db *bolt.DB, args []string) error {
-	return db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(config.Bucket))
+func (s *Store) InsertTask(arg string) error {
+	return s.DB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(config.BucketTasks))
 
 		id, _ := b.NextSequence()
-
-		body, err := json.Marshal(args)
-		if err != nil {
-			return err
-		}
-
-		if err = b.Put(itob(id), body); err != nil {
+		key := fmt.Sprintf("task%d", id)
+		if err := b.Put([]byte(key), []byte(arg)); err != nil {
 			return err
 		}
 
@@ -63,7 +60,7 @@ func InsertTask(db *bolt.DB, args []string) error {
 func (s *Store) Load() ([][]byte, error) {
 	values := [][]byte{}
 	err := s.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(config.Bucket))
+		b := tx.Bucket([]byte(config.BucketTasks))
 
 		c := b.Cursor()
 
@@ -77,9 +74,32 @@ func (s *Store) Load() ([][]byte, error) {
 	return values, err
 }
 
-// itob returns an 8-byte big endian representation of v.
-func itob(v uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, v)
-	return b
+func (s *Store) DeleteTask(key []byte) error {
+	return s.DB.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(config.BucketTasks))
+		return bucket.Delete(key)
+	})
+}
+
+func (s *Store) GetTask(key []byte) ([]byte, error) {
+	var value []byte
+	err := s.DB.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(config.BucketTasks))
+		value = bucket.Get(key)
+		return nil
+	})
+
+	return value, err
+}
+
+func (s *Store) MarkDone(key, value []byte) error {
+	return s.DB.Update(func(tx *bolt.Tx) error {
+		bDone := tx.Bucket([]byte(config.BucketDone))
+
+		if err := bDone.Put(key, value); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

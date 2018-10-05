@@ -5,6 +5,7 @@ import (
 	"log"
 	"gophercises/07/task/store"
 	"fmt"
+	"strings"
 )
 
 func init() {
@@ -18,10 +19,12 @@ var addCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		s := store.OpenDB()
 
-		if err := store.InsertTask(s.DB, args); err != nil {
+		arg := strings.Join(args, " ")
+
+		if err := s.InsertTask(arg); err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println("task successfully created")
+		fmt.Printf("Added \"%s\" to your task list.\n", arg)
 	},
 }
