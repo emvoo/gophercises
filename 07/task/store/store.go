@@ -4,7 +4,7 @@ import (
 	"github.com/boltdb/bolt"
 	"log"
 	"gophercises/07/task/config"
-		"fmt"
+	"fmt"
 )
 
 type Store struct {
@@ -57,15 +57,45 @@ func (s *Store) InsertTask(arg string) error {
 	})
 }
 
-func (s *Store) Load() ([][]byte, error) {
-	values := [][]byte{}
+type V struct {
+	Key   string
+	Value string
+}
+
+func (s *Store) LoadToDos() ([]V, error) {
+	values := []V{}
 	err := s.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(config.BucketTasks))
 
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			values = append(values, v)
+			value := V{
+				Key:string(k),
+				Value:string(v),
+			}
+			values = append(values, value)
+		}
+
+		return nil
+	})
+
+	return values, err
+}
+
+func (s *Store) LoadCompletedTasks() ([]V, error) {
+	values := []V{}
+	err := s.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(config.BucketDone))
+
+		c := b.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			value := V{
+				Key:string(k),
+				Value:string(v),
+			}
+			values = append(values, value)
 		}
 
 		return nil

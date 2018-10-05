@@ -2,21 +2,22 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"gophercises/07/task/store"
-		"log"
-	"fmt"
+	"log"
 	"strconv"
-	)
+	"gophercises/07/task/store"
+	"fmt"
+)
 
-var doCmd = &cobra.Command{
-	Use:   "do",
-	Short: "Mark a task on your TODO list as complete",
-	Args:  cobra.MaximumNArgs(1),
+var rmCmd = &cobra.Command{
+	Use:"rm",
+	Short:"Removes the task from your TODO list.",
+	Args:cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			log.Println("Task number should be passed as an argument.")
 			return
 		}
+
 		arg, err := strconv.ParseInt(args[0], 10, 64)
 		if err != nil {
 			log.Fatal(err)
@@ -38,28 +39,15 @@ var doCmd = &cobra.Command{
 
 
 		key := []byte(keyStr)
-		value, err := s.GetTask(key)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		if value == nil {
-			fmt.Println("Task has not been found.")
-			return
-		}
 
 		if err = s.DeleteTask(key); err != nil {
 			log.Fatal(err)
 		}
 
-		if err = s.MarkDone(key, value); err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println("Task has been marked done.")
+		fmt.Println("Task has been successfully deleted.")
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(doCmd)
+	RootCmd.AddCommand(rmCmd)
 }
